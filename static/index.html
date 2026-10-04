@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Relay 16CH Control</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Modbus POE ETH Relay 16CH</h1>
+    <form id="conn" class="conn" autocomplete="off">
+      <label>IP <input id="host" required></label>
+      <label>Port <input id="port" type="number" min="1" max="65535" required></label>
+      <label>Unit <input id="unit" type="number" min="0" max="255" required></label>
+      <button type="submit">Connect</button>
+      <span id="status" class="status" title="">—</span>
+    </form>
+  </header>
+
+  <main>
+    <section class="bulk">
+      <button class="btn on" data-bulk="on">All ON</button>
+      <button class="btn off" data-bulk="off">All OFF</button>
+      <button class="btn invert" data-bulk="invert">Invert all</button>
+      <button class="btn ghost" id="refresh" title="Read relay states from device">Refresh</button>
+      <span class="count" id="count"></span>
+    </section>
+
+    <section class="device" id="device">
+      <img src="/ui/pic1.PNG" alt="Relay board, top view" draggable="false">
+      <!-- hotspots injected by app.js -->
+    </section>
+
+    <section class="channels-head">
+      <h2>Channels</h2>
+      <button class="btn ghost" id="editNames">Edit names</button>
+    </section>
+    <section class="channels" id="channels"></section>
+  </main>
+
+  <div class="toast" id="toast" role="alert"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
