@@ -19,7 +19,7 @@ CONFIG_PATH = os.path.join(BASE_DIR, 'config.json')
 
 DEFAULT_CONFIG = {
     'host': '192.168.1.200',
-    'port': 502,
+    'port': 4196,
     'unit': 1,
     'names': ['CH%d' % (i + 1) for i in range(NUM_RELAYS)],
 }
