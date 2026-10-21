@@ -34,7 +34,7 @@ Use `python app.py --no-browser` to start without opening a browser.
 
 ## Connect to the relay board
 
-1. In the top bar, enter the board's **IP**, **Port** (default `4196`, the board's "Device Port") and **Unit** (Modbus address, default `1`).
+1. In the top bar, enter the board's **IP** (default `192.168.1.200`), **Port** (default `4196`, the board's "Device Port") and **Unit** (Modbus address, default `1`).
 2. Click **Connect**. The badge turns green (**Connected**) and the page shows the real relay states.
 
 The settings are saved and reused at the next start.
