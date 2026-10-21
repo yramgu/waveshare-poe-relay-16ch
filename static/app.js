@@ -10,10 +10,11 @@ const ROW_BOTTOM = { y: 312, h: 70 };  // CH16..CH9 (labels + terminals)
 
 let states = new Array(N).fill(false);
 let names = Array.from({ length: N }, (_, i) => `CH${i + 1}`);
+let maps = [];   // [{name, channels: [1-based channel numbers]}] from config.json "mapN" keys
 let editing = false;
 
 const $ = (sel) => document.querySelector(sel);
-const hots = [], cards = [];
+const hots = [], cards = [], mapBtns = [];
 
 // ---------- API ----------
 async function api(method, url, body) {
@@ -93,7 +94,29 @@ function buildCards() {
   }
 }
 
+function buildMaps() {
+  const list = $('#mapList');
+  list.innerHTML = '';
+  mapBtns.length = 0;
+  maps.forEach((m) => {
+    const b = document.createElement('button');
+    b.className = 'btn map';
+    b.textContent = m.name;
+    b.addEventListener('click', () => applyMap(m.name));
+    list.appendChild(b);
+    mapBtns.push(b);
+  });
+  $('#maps').hidden = maps.length === 0;
+}
+
 function render() {
+  maps.forEach((m, i) => {
+    // a map is active when exactly its channels are ON
+    const active = states.every((on, ch) => !!on === m.channels.includes(ch + 1));
+    mapBtns[i].classList.toggle('active', active);
+    const list = m.channels.map((ch) => names[ch - 1]).join(', ') || 'none';
+    mapBtns[i].title = `ON: ${list} — all others OFF`;
+  });
   let onCount = 0;
   for (let i = 0; i < N; i++) {
     const on = !!states[i];
@@ -130,6 +153,12 @@ async function bulk(kind) {
   btns.forEach((b) => (b.disabled = false));
 }
 
+async function applyMap(name) {
+  mapBtns.forEach((b) => (b.disabled = true));
+  await command('POST', `/api/map/${encodeURIComponent(name)}`, null, [...hots, ...cards]);
+  mapBtns.forEach((b) => (b.disabled = false));
+}
+
 async function refresh() { await command('GET', '/api/state'); }
 
 async function toggleEdit() {
@@ -139,6 +168,8 @@ async function toggleEdit() {
     try {
       const data = await api('POST', '/api/config', { names: newNames });
       names = data.config.names;
+      maps = data.config.maps;   // name-based map entries may resolve differently now
+      buildMaps();
     } catch (err) { toast(err.message); return; }
   }
   editing = !editing;
@@ -170,6 +201,8 @@ async function init() {
     const cfg = await api('GET', '/api/config');
     $('#host').value = cfg.host; $('#port').value = cfg.port; $('#unit').value = cfg.unit;
     names = cfg.names;
+    maps = cfg.maps || [];
+    buildMaps();
   } catch (err) { toast(err.message); }
   render();
   refresh();

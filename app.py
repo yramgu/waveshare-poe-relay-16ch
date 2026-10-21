@@ -6,6 +6,7 @@ Run:  python app.py   (opens http://127.0.0.1:5000 in the browser; add --no-brow
 """
 import json
 import os
+import re
 import sys
 import threading
 import webbrowser
@@ -40,6 +41,33 @@ def save_config(cfg):
         json.dump(cfg, f, indent=2)
 
 
+def map_keys():
+    """Config keys "map1", "map2", ... in numeric order."""
+    keys = [k for k in config if re.fullmatch(r'map\d+', k) and isinstance(config[k], list)]
+    return sorted(keys, key=lambda k: int(k[3:]))
+
+
+def resolve_channel(ref):
+    """A map entry is "CHn" / n (channel number) or a channel name. Returns 1-based channel or None."""
+    m = re.fullmatch(r'(?i)ch(\d+)', str(ref).strip())
+    if isinstance(ref, int) or m:
+        ch = int(m.group(1)) if m else ref
+        return ch if 1 <= ch <= NUM_RELAYS else None
+    if ref in config['names']:
+        return config['names'].index(ref) + 1
+    return None
+
+
+def resolve_map(key):
+    channels = {resolve_channel(r) for r in config[key]}
+    return sorted(c for c in channels if c)
+
+
+def config_response():
+    maps = [{'name': k, 'channels': resolve_map(k)} for k in map_keys()]
+    return dict(config, maps=maps)
+
+
 config = load_config()
 relay = RelayClient(config['host'], config['port'], config['unit'])
 app = Flask(__name__, static_folder='static', static_url_path='/static')
@@ -72,7 +100,7 @@ def ui_files(filename):
 
 @app.get('/api/config')
 def get_config():
-    return jsonify(config)
+    return jsonify(config_response())
 
 
 @app.post('/api/config')
@@ -89,7 +117,7 @@ def set_config():
         names = [str(n).strip()[:24] or 'CH%d' % (i + 1) for i, n in enumerate(data['names'][:NUM_RELAYS])]
         config['names'] = names + DEFAULT_CONFIG['names'][len(names):]
     save_config(config)
-    return jsonify(ok=True, config=config)
+    return jsonify(ok=True, config=config_response())
 
 
 @app.get('/api/state')
@@ -114,6 +142,15 @@ def all_on():
 @app.post('/api/all/off')
 def all_off():
     return run_and_read(lambda: relay.set_all([False] * NUM_RELAYS))
+
+
+@app.post('/api/map/<name>')
+def apply_map(name):
+    """Turn ON the relays listed in config[name], all others OFF (one 0x0F write)."""
+    if name not in map_keys():
+        return jsonify(ok=False, error='unknown map "%s"' % name), 404
+    channels = resolve_map(name)
+    return run_and_read(lambda: relay.set_all([ch in channels for ch in range(1, NUM_RELAYS + 1)]))
 
 
 @app.post('/api/all/invert')

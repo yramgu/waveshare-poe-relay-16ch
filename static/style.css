@@ -68,6 +68,12 @@ main { max-width: 1000px; margin: 0 auto; padding: 18px 16px 40px; }
 .hot.on .led { background: var(--on); box-shadow: 0 0 8px var(--on); }
 .hot.busy, .card.busy { opacity: .55; pointer-events: none; }
 
+/* ---- maps ribbon ---- */
+.maps { margin: 22px 0 0; }
+.maps h2 { margin: 0 0 10px; font-size: 15px; color: var(--muted); font-weight: 600; }
+.map-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn.map.active { border-color: var(--accent); background: rgba(76, 154, 255, .2); color: var(--accent); }
+
 /* ---- channel cards ---- */
 .channels-head { display: flex; align-items: center; justify-content: space-between; margin: 22px 0 10px; }
 .channels-head h2 { margin: 0; font-size: 15px; color: var(--muted); font-weight: 600; }

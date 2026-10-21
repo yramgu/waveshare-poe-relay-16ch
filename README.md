@@ -52,6 +52,18 @@ The settings are saved and reused at the next start.
 
 An ON relay shows green on the photo and on its card. The counter at the top right shows how many relays are ON.
 
+## Maps (relay presets)
+
+A map is a set of relays to turn ON; every other relay is turned OFF. Add `map1`, `map2`, ... to `config.json`:
+
+```json
+  "map1": ["CH1", "CH6", "CH8"],
+  "map2": ["CH12", "CH13", "CH3"]
+```
+
+An entry is a channel number (`"CH3"` or `3`) or a channel name (`"Pump"`). Restart `app.py` after editing the file.
+Each map shows as a button under **Maps**. Click it to apply the map in one write. The button is highlighted while the relays match the map exactly.
+
 ## Rename channels
 
 1. Click **Edit names**.
