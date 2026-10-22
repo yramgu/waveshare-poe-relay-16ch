@@ -54,15 +54,17 @@ An ON relay shows green on the photo and on its card. The counter at the top rig
 
 ## Maps (relay presets)
 
-A map is a set of relays to turn ON; every other relay is turned OFF. Add `map1`, `map2`, ... to `config.json`:
+A map is a set of relays to turn ON; every other relay is turned OFF. Add a `maps` dictionary to `config.json`. The key is the map name (any text), the value is the list of relays:
 
 ```json
-  "map1": ["CH1", "CH6", "CH8"],
-  "map2": ["CH12", "CH13", "CH3"]
+  "maps": {
+    "dcdc-1v8": ["CH1", "CH6", "CH8"],
+    "map2": ["CH12", "CH13", "CH3"]
+  }
 ```
 
 An entry is a channel number (`"CH3"` or `3`) or a channel name (`"Pump"`). Restart `app.py` after editing the file.
-Each map shows as a button under **Maps**. Click it to apply the map in one write. The button is highlighted while the relays match the map exactly.
+Each map shows as a button under **Maps**, in file order. Click it to apply the map in one write. The button is highlighted while the relays match the map exactly. Click a highlighted button again to turn the map off (all relays OFF).
 
 ## Rename channels
 

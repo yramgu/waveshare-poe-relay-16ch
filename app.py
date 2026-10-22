@@ -23,6 +23,7 @@ DEFAULT_CONFIG = {
     'port': 4196,
     'unit': 1,
     'names': ['CH%d' % (i + 1) for i in range(NUM_RELAYS)],
+    'maps': {},
 }
 
 
@@ -41,10 +42,12 @@ def save_config(cfg):
         json.dump(cfg, f, indent=2)
 
 
-def map_keys():
-    """Config keys "map1", "map2", ... in numeric order."""
-    keys = [k for k in config if re.fullmatch(r'map\d+', k) and isinstance(config[k], list)]
-    return sorted(keys, key=lambda k: int(k[3:]))
+def config_maps():
+    """The "maps" dict of config.json ({name: [channel refs]}), in file order."""
+    maps = config.get('maps')
+    if not isinstance(maps, dict):
+        return {}
+    return {str(k): v for k, v in maps.items() if isinstance(v, list)}
 
 
 def resolve_channel(ref):
@@ -58,13 +61,13 @@ def resolve_channel(ref):
     return None
 
 
-def resolve_map(key):
-    channels = {resolve_channel(r) for r in config[key]}
+def resolve_map(refs):
+    channels = {resolve_channel(r) for r in refs}
     return sorted(c for c in channels if c)
 
 
 def config_response():
-    maps = [{'name': k, 'channels': resolve_map(k)} for k in map_keys()]
+    maps = [{'name': k, 'channels': resolve_map(v)} for k, v in config_maps().items()]
     return dict(config, maps=maps)
 
 
@@ -144,12 +147,13 @@ def all_off():
     return run_and_read(lambda: relay.set_all([False] * NUM_RELAYS))
 
 
-@app.post('/api/map/<name>')
+@app.post('/api/map/<path:name>')
 def apply_map(name):
-    """Turn ON the relays listed in config[name], all others OFF (one 0x0F write)."""
-    if name not in map_keys():
+    """Turn ON the relays listed in config["maps"][name], all others OFF (one 0x0F write)."""
+    maps = config_maps()
+    if name not in maps:
         return jsonify(ok=False, error='unknown map "%s"' % name), 404
-    channels = resolve_map(name)
+    channels = resolve_map(maps[name])
     return run_and_read(lambda: relay.set_all([ch in channels for ch in range(1, NUM_RELAYS + 1)]))
 
 

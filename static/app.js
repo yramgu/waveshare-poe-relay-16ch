@@ -10,7 +10,7 @@ const ROW_BOTTOM = { y: 312, h: 70 };  // CH16..CH9 (labels + terminals)
 
 let states = new Array(N).fill(false);
 let names = Array.from({ length: N }, (_, i) => `CH${i + 1}`);
-let maps = [];   // [{name, channels: [1-based channel numbers]}] from config.json "mapN" keys
+let maps = [];   // [{name, channels: [1-based channel numbers]}] from config.json "maps" dict
 let editing = false;
 
 const $ = (sel) => document.querySelector(sel);
@@ -85,7 +85,9 @@ function buildHotspots() {
 function buildCards() {
   const wrap = $('#channels');
   wrap.innerHTML = '';
-  for (let ch = 1; ch <= N; ch++) {
+  // same layout as the board: CH1..CH8 on top, CH16..CH9 below
+  const order = Array.from({ length: N }, (_, i) => (i < 8 ? i + 1 : N + 8 - i));
+  for (const ch of order) {
     const c = document.createElement('div');
     c.className = 'card';
     c.addEventListener('click', (e) => { if (!editing && e.target.tagName !== 'INPUT') toggle(ch); });
@@ -102,7 +104,7 @@ function buildMaps() {
     const b = document.createElement('button');
     b.className = 'btn map';
     b.textContent = m.name;
-    b.addEventListener('click', () => applyMap(m.name));
+    b.addEventListener('click', () => applyMap(m.name, b.classList.contains('active')));
     list.appendChild(b);
     mapBtns.push(b);
   });
@@ -115,7 +117,9 @@ function render() {
     const active = states.every((on, ch) => !!on === m.channels.includes(ch + 1));
     mapBtns[i].classList.toggle('active', active);
     const list = m.channels.map((ch) => names[ch - 1]).join(', ') || 'none';
-    mapBtns[i].title = `ON: ${list} — all others OFF`;
+    mapBtns[i].title = active
+      ? `Active (ON: ${list}) — click to turn all OFF`
+      : `ON: ${list} — all others OFF`;
   });
   let onCount = 0;
   for (let i = 0; i < N; i++) {
@@ -153,9 +157,11 @@ async function bulk(kind) {
   btns.forEach((b) => (b.disabled = false));
 }
 
-async function applyMap(name) {
+// Clicking the active map turns it "off" (all relays OFF); otherwise apply it.
+async function applyMap(name, active) {
   mapBtns.forEach((b) => (b.disabled = true));
-  await command('POST', `/api/map/${encodeURIComponent(name)}`, null, [...hots, ...cards]);
+  const url = active ? '/api/all/off' : `/api/map/${encodeURIComponent(name)}`;
+  await command('POST', url, null, [...hots, ...cards]);
   mapBtns.forEach((b) => (b.disabled = false));
 }
 
